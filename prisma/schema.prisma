@@ -1,0 +1,841 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["tecnobanturh", "public"]
+}
+
+model User {
+  id             Int      @id() @default(autoincrement())
+  name           String?
+  email          String   @unique
+  password       String
+  is_super_admin Boolean  @default(false)
+  active         Boolean  @default(false)
+  created_at     DateTime @default(now())
+
+  userRoles     UserRoles[]
+  Funcionario   Funcionario? @relation(fields: [funcionarioId], references: [id], onDelete: Cascade)
+  funcionarioId Int?
+
+  @@schema("public")
+}
+
+model Utente {
+  id Int @id() @default(autoincrement())
+
+  num_processo          Int? @unique
+  num_processo_anterior Int? @unique
+
+  nome_pai String?
+  nome_mae String
+
+  nascimento   DateTime
+  genero       Genero
+  estado_civil Estado_Civil
+  raca         Raca
+  albinismo    Boolean      @default(false)
+
+  nivel_academico NIVEL_ACADEMICO?
+  nivel_economico Nivel_Economico?
+  profissao       String?
+
+  created_at DateTime @default(now())
+
+  Pais        Pais?      @relation(fields: [paisId], references: [id], onDelete: Cascade)
+  paisId      Int?
+  Provincia   Provincia? @relation(fields: [provinciaId], references: [id], onDelete: Cascade)
+  provinciaId Int?
+  Municipio   Municipio? @relation(fields: [municipioId], references: [id], onDelete: Cascade)
+  municipioId Int?
+  Cliente     Cliente?   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  clienteId   Int?
+
+  @@schema("public")
+}
+
+model Laboratorio {
+  id         Int          @id() @default(autoincrement())
+  nome       String       @unique
+  tipo_exame Tipo_exame[]
+  Exame      Exame[]
+
+  @@schema("public")
+}
+
+model Tipo_exame {
+  id    Int     @id() @default(autoincrement())
+  nome  String  @unique
+  exame Exame[]
+
+  Laboratorio   Laboratorio? @relation(fields: [laboratorioId], references: [id], onDelete: Cascade)
+  laboratorioId Int?
+
+  @@schema("public")
+}
+
+model Exame {
+  id     Int     @id() @default(autoincrement())
+  nome   String  @unique
+  activo Boolean
+
+  Tipo_exame    Tipo_exame  @relation(fields: [tipo_exameId], references: [id], onDelete: Cascade)
+  tipo_exameId  Int
+  Laboratorio   Laboratorio @relation(fields: [laboratorioId], references: [id], onDelete: Cascade)
+  laboratorioId Int         @default(1)
+
+  @@schema("public")
+}
+
+model Pais {
+  id     Int    @id() @default(autoincrement())
+  nome   String @unique
+  codigo String
+
+  provincia  Provincia[]
+  Fornecedor Fornecedor[]
+  Utente     Utente[]
+
+  @@schema("public")
+}
+
+model Provincia {
+  id   Int    @id() @default(autoincrement())
+  nome String @unique
+
+  utente    Utente[]
+  municipio Municipio[]
+
+  Pais   Pais? @relation(fields: [paisId], references: [id], onDelete: Cascade)
+  paisId Int?
+
+  @@schema("public")
+}
+
+model Municipio {
+  id   Int    @id() @default(autoincrement())
+  nome String @unique
+
+  utente      Utente[]
+  Provincia   Provincia? @relation(fields: [provinciaId], references: [id], onDelete: Cascade)
+  provinciaId Int?
+
+  @@schema("public")
+}
+
+// Roles and Permissions
+model Permission {
+  id   Int    @id() @default(autoincrement())
+  name String @unique
+  desc String
+
+  rolesPermission RolesPermission[]
+
+  @@schema("public")
+}
+
+model Roles {
+  id   Int    @id() @default(autoincrement())
+  name String @unique
+  desc String
+
+  rolesPermission RolesPermission[]
+  userRoles       UserRoles[]
+
+  @@schema("public")
+}
+
+model UserRoles {
+  id      Int    @id() @default(autoincrement())
+  User    User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId  Int?
+  Roles   Roles? @relation(fields: [rolesId], references: [id], onDelete: Cascade)
+  rolesId Int?
+
+  @@schema("public")
+}
+
+model RolesPermission {
+  id           Int         @id() @default(autoincrement())
+  Permission   Permission? @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  permissionId Int?
+  Roles        Roles?      @relation(fields: [rolesId], references: [id], onDelete: Cascade)
+  rolesId      Int?
+
+  @@schema("public")
+}
+
+//All Enum
+enum Genero {
+  MASCULINO
+  FEMENINO
+
+  @@schema("public")
+}
+
+enum Estado_Civil {
+  SOLTEIRO
+  CASADO
+  DIVORCIADO
+  VIUVO
+  UNIAO_DE_FACTO
+
+  @@schema("public")
+}
+
+enum Raca {
+  NEGRA
+  BRANCA
+  MESTICA
+
+  @@schema("public")
+}
+
+enum NIVEL_ACADEMICO {
+  NAO_FREQUENTADO
+  ENSINO_BASE
+  ENSINO_MEDIO
+  LICENCIADO
+  MESTRE
+  PHD
+
+  @@schema("public")
+}
+
+enum Identificacao {
+  ASSENTO_DE_NASCIMENTO
+  BILHETE_DE_IDENTIDADE
+  PASSAPORTE
+  CARTAO_DE_RESIDENTE
+  CEDULA
+  CARTA_DE_CONDUCAO
+  NIF
+
+  @@schema("public")
+}
+
+enum Nivel_Economico {
+  BAIXA
+  MEDIA
+  ALTA
+
+  @@schema("public")
+}
+
+enum Tipo_entidade {
+  SINGULAR
+  COLECTIVO
+
+  @@schema("public")
+}
+
+enum Tipo_Movimento {
+  ENTRADA
+  SAIDA
+
+  @@schema("public")
+}
+
+enum Tipo_Estado {
+  ACTIVO
+  REMOVIDO
+
+  @@schema("public")
+}
+
+enum Tipo_Documento {
+  FACTURA
+  RECIBO
+  NOTA_DE_ENTREGA
+  OUTRO
+
+  @@schema("public")
+}
+
+enum Familia_Artigo {
+  PRODUTO
+  SERVICO
+
+  @@schema("public")
+}
+
+enum Tipo_Regular {
+  RUPTURA
+  REAJUSTE
+
+  @@schema("public")
+}
+
+enum Tipo_Desconto {
+  COMERCIAL
+  FINANCEIRO
+  DIVERSO
+  NENHUM
+
+  @@schema("public")
+}
+
+// Sprint 2
+
+model TipoProfessionalClinico {
+  id                Int    @id() @default(autoincrement())
+  tipo_profissional String @unique
+
+  ProfissionalClinico ProfissionalClinico[]
+
+  @@map("Tipo_Professional_Clinico")
+  @@schema("public")
+}
+
+model SalaAtendimento {
+  id   Int    @id() @default(autoincrement())
+  sala String @unique
+
+  @@map("Sala_atendimento")
+  @@schema("public")
+}
+
+model Entidade {
+  id                 Int            @id() @default(autoincrement())
+  nome               String
+  tipo_entidade      Tipo_entidade  @default(SINGULAR)
+  tipo_identificacao Identificacao?
+  identificacao      String?
+  data_emissao       DateTime?
+  endereco           String?
+
+  Cliente    Cliente[]
+  Fornecedor Fornecedor[]
+
+  @@schema("public")
+}
+
+model Fornecedor {
+  id                Int         @id() @default(autoincrement())
+  telefone          String
+  telefone_opcional String?
+  whatsapp          String?
+  endereco          String?
+  email             String?
+  estado            Tipo_Estado
+
+  Pais       Pais?     @relation(fields: [paisId], references: [id], onDelete: Cascade)
+  paisId     Int?
+  Entidade   Entidade? @relation(fields: [entidadeId], references: [id], onDelete: Cascade)
+  entidadeId Int?
+
+  EntradaStock EntradaStock[]
+
+  @@schema("public")
+}
+
+model Unidade {
+  id         Int      @id() @default(autoincrement())
+  designacao String   @unique()
+  Artigo     Artigo[]
+
+  @@schema("public")
+}
+
+model Categoria {
+  id         Int      @id() @default(autoincrement())
+  designacao String   @unique()
+  Artigo     Artigo[]
+
+  @@schema("public")
+}
+
+model OperacaoMovimento {
+  id         Int            @id() @default(autoincrement())
+  designacao String
+  tipo       Tipo_Movimento
+
+  EntradaStock EntradaStock[]
+
+  @@map("Operacao_Movimento")
+  @@schema("public")
+}
+
+model Artigo {
+  id        Int            @id() @default(autoincrement())
+  nome      String
+  imagem    String?
+  stock_min Int?
+  stock_max Int?
+  preco     Int?
+  familia   Familia_Artigo
+  estado    Tipo_Estado
+
+  Unidade     Unidade?   @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
+  unidadeId   Int?
+  Categoria   Categoria? @relation(fields: [categoriaId], references: [id], onDelete: Cascade)
+  categoriaId Int?
+
+  EntradaStock EntradaStock[]
+
+  @@schema("public")
+}
+
+model LocalArmazenamento {
+  id            Int     @id() @default(autoincrement())
+  designacao    String
+  efectua_saida Boolean
+
+  EntradaStock  EntradaStock[]
+  Funcionario   Funcionario?   @relation(fields: [funcionarioId], references: [id], onDelete: Cascade)
+  funcionarioId Int?
+
+  @@map("Local_Armazenamento")
+  @@schema("public")
+}
+
+model EntradaStock {
+  id                   Int                 @id() @default(autoincrement())
+  descricao            String
+  efectua_saida        Boolean
+  tipo_documento       Tipo_Documento?
+  numero_documento     String?
+  lote                 Int?
+  qtd_entrada          Int?
+  qtd_saida            Int?
+  caducado             Boolean
+  data_caducidade      DateTime?
+  Fornecedor           Fornecedor?         @relation(fields: [fornecedorId], references: [id], onDelete: Cascade)
+  fornecedorId         Int?
+  OperacaoMovimento    OperacaoMovimento?  @relation(fields: [operacaoMovimentoId], references: [id], onDelete: Cascade)
+  operacaoMovimentoId  Int?
+  Artigo               Artigo?             @relation(fields: [artigoId], references: [id], onDelete: Cascade)
+  artigoId             Int?
+  LocalArmazenamento   LocalArmazenamento? @relation(fields: [localArmazenamentoId], references: [id], onDelete: Cascade)
+  localArmazenamentoId Int?
+
+  RegularStock RegularStock[]
+
+  @@map("Entrada_Stock")
+  @@schema("public")
+}
+
+model RegularStock {
+  id             Int           @id() @default(autoincrement())
+  descricao      String
+  quantidade     Int
+  tipo           Tipo_Regular
+  EntradaStock   EntradaStock? @relation(fields: [entradaStockId], references: [id], onDelete: Cascade)
+  entradaStockId Int?
+
+  @@map("Regular_Stock")
+  @@schema("public")
+}
+
+model ProfissionalClinico {
+  id                        Int                      @id() @default(autoincrement())
+  TipoProfessionalClinico   TipoProfessionalClinico? @relation(fields: [tipoProfessionalClinicoId], references: [id], onDelete: Cascade)
+  tipoProfessionalClinicoId Int?
+  Funcionario               Funcionario?             @relation(fields: [funcionarioId], references: [id], onDelete: Cascade)
+  funcionarioId             Int?
+
+  @@schema("public")
+}
+
+model AreaRequisicao {
+  id                        Int                         @id() @default(autoincrement())
+  designacao                String
+  FuncionarioAreaRequisicao FuncionarioAreaRequisicao[]
+  Funcionario               Funcionario?                @relation(fields: [funcionarioId], references: [id], onDelete: Cascade)
+  funcionarioId             Int?
+
+  @@schema("public")
+}
+
+model FuncionarioAreaRequisicao {
+  id               Int             @id() @default(autoincrement())
+  AreaRequisicao   AreaRequisicao? @relation(fields: [areaRequisicaoId], references: [id], onDelete: Cascade)
+  areaRequisicaoId Int?
+  Funcionario      Funcionario?    @relation(fields: [funcionarioId], references: [id], onDelete: Cascade)
+  funcionarioId    Int?
+
+  @@schema("public")
+}
+
+model Cliente {
+  id                  Int            @id() @default(autoincrement())
+  telefone            String
+  telefoneAlternativo String?
+  whatsapp            String?
+  endereco            String?
+  email               String?
+  tipoDesconto        Tipo_Desconto?
+  valorDesconto       Float?
+  percentagemDesconto Int?
+  efectuaDetencao     Boolean
+  saldo               Float
+  limiteSaldo         Float
+  limiteCredito       Float
+  estado              Tipo_Estado
+
+  Entidade   Entidade @relation(fields: [entidadeId], references: [id], onDelete: Cascade)
+  entidadeId Int
+
+  Utente Utente[] 
+
+  @@schema("public")
+}
+
+// Model Funcionario para referecias de FK
+
+model Funcionario {
+  id                          Int                         @id @default(autoincrement())
+  nome_completo               String                      @map("nomeCompleto")
+  nome_pai                    String                      @map("nomePai")
+  nome_mae                    String                      @map("nomeMae")
+  nascimento                  DateTime
+  email                       String                      @unique
+  genero                      Genero_RH
+  tipo_identificacao          Identificacao_RH
+  num_identificacao           String
+  nivel_academico             NIVEL_ACADEMICO_RH
+  avatar                      String?
+  telefone1                   String                      @unique
+  telefone2                   String?                     @unique
+  linkedin                    String?
+  whatsApp                    String?
+  instagram                   String?
+  bairro                      String
+  rua                         String
+  Funcao                      Funcao?                     @relation(fields: [id_funcao], references: [id], onDelete: Cascade)
+  id_funcao                   Int?                        @map("funcaoId")
+  Categoria                   CategoriaRH?                @relation(fields: [id_categoria], references: [id], onDelete: Cascade)
+  id_categoria                Int?                        @map("categoriaId")
+  num_conta                   String?                     @unique @map("numeroConta")
+  iban                        String?                     @unique
+  Id_banco                    Int?                        @map("bancoId")
+  createdAt                   DateTime                    @default(now()) @map("created_at")
+  updatedAt                   DateTime                    @updatedAt @map("updated_at")
+  dadosprofissionais          DadosProfissionais[]
+  formacoes                   Formacoes[]
+  esperiencialaboral          ExperiencialLaboral[]
+  departamentosComoChefe      Departamento[]              @relation("FuncionarioChefe")
+  departamentosComoSupervisor Departamento[]              @relation("FuncionarioSupervisor")
+  funcionariodepartamento     FuncionarioDepartamento[]
+  Banco                       Banco?                      @relation(fields: [Id_banco], references: [id], onDelete: Cascade)
+  avaliacao                   Avaliacao[]
+  LocalArmazenamento          LocalArmazenamento[]
+  ProfissionalClinico         ProfissionalClinico[]
+  FuncionarioAreaRequisicao   FuncionarioAreaRequisicao[]
+  AreaRequisicao              AreaRequisicao[]
+  User                        User[]
+
+  @@map("funcionario")
+  @@schema("tecnobanturh")
+}
+
+model Carreira {
+  id            Int           @id @default(autoincrement())
+  nome_carreira String        @unique @map("nome")
+  regime        Regime
+  subcarreira   SubCarreira[]
+  cateroria     CategoriaRH[]
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  @@map("carreira")
+  @@schema("tecnobanturh")
+}
+
+model SubCarreira {
+  id               Int           @id @default(autoincrement())
+  nome_SubCarreira String        @map("nome")
+  Id_carreira      Int?          @map("carreiraId")
+  Carreira         Carreira?     @relation(fields: [Id_carreira], references: [id], onDelete: Cascade)
+  categoria        CategoriaRH[]
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
+
+  @@map("subcarreira")
+  @@schema("tecnobanturh")
+}
+
+model CategoriaRH {
+  id             Int           @id @default(autoincrement())
+  nome_categoria String        @map("nome")
+  Carreira       Carreira?     @relation(fields: [Id_carreira], references: [id], onDelete: Cascade)
+  salario_base   Float
+  Id_carreira    Int?          @map("carreiraId")
+  SubCarreira    SubCarreira?  @relation(fields: [Id_subCarreira], references: [id], onDelete: Cascade)
+  Id_subCarreira Int?          @map("subCarreiraId")
+  funcionario    Funcionario[]
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  @@map("categoria")
+  @@schema("tecnobanturh")
+}
+
+model Funcao {
+  id          Int           @id @default(autoincrement())
+  nome_funcao String        @map("nome")
+  funcionario Funcionario[]
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  @@map("funcao")
+  @@schema("tecnobanturh")
+}
+
+model Banco {
+  id          Int           @id @default(autoincrement())
+  nome_banco  String        @map("nome")
+  codigo      String
+  sigla       String
+  funcionario Funcionario[]
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  @@map("banco")
+  @@schema("tecnobanturh")
+}
+
+model DadosProfissionais {
+  id              Int      @id @default(autoincrement())
+  data_admissao   DateTime
+  numero_despacho String?  @map("numeroDespacho")
+  data_despacho   DateTime
+  contrato        Contrato
+
+  Funcionario    Funcionario? @relation(fields: [Id_funcionario], references: [id], onDelete: Cascade)
+  Id_funcionario Int?         @map("funcionarioId")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  @@map("DadosProfissionais")
+  @@schema("tecnobanturh")
+}
+
+model Formacoes {
+  id             Int          @id @default(autoincrement())
+  ano_inicio     DateTime
+  ano_termino    DateTime
+  formacao       String
+  pais           String
+  instituicao    String
+  Funcionario    Funcionario? @relation(fields: [Id_funcionario], references: [id], onDelete: Cascade)
+  Id_funcionario Int?         @map("funcionarioId")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  @@map("formacoes")
+  @@schema("tecnobanturh")
+}
+
+model Publicacoes {
+  id        Int      @id @default(autoincrement())
+  titulo    String
+  entidade  String
+  ano       DateTime
+  tipo      Tipo
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("publicacoes")
+  @@schema("tecnobanturh")
+}
+
+model ExperiencialLaboral {
+  id             Int          @id @default(autoincrement())
+  ano_inicio     DateTime
+  ano_termino    DateTime
+  funcao         String
+  instituicao    String
+  pais           String?
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  Funcionario    Funcionario? @relation(fields: [Id_funcionario], references: [id], onDelete: Cascade)
+  Id_funcionario Int?         @map("funcionarioId")
+
+  @@schema("tecnobanturh")
+}
+
+model Departamento {
+  id                        Int          @id @default(autoincrement())
+  nome_departamento         String       @map("nome")
+  Id_funcionario_chefe      Int?
+  Id_funcionario_supervisor Int?
+  createdAt                 DateTime     @default(now()) @map("created_at")
+  updatedAt                 DateTime     @updatedAt @map("updated_at")
+  funcionario_chefe         Funcionario? @relation("FuncionarioChefe", fields: [Id_funcionario_chefe], references: [id], onDelete: Cascade)
+  funcionario_supervisor    Funcionario? @relation("FuncionarioSupervisor", fields: [Id_funcionario_supervisor], references: [id], onDelete: Cascade)
+  avaliacao                 Avaliacao[]
+
+  funcionariodepartamento FuncionarioDepartamento[]
+
+  @@schema("tecnobanturh")
+}
+
+model FuncionarioDepartamento {
+  id              Int           @id @default(autoincrement())
+  Departamento    Departamento? @relation(fields: [Id_departamento], references: [id], onDelete: Cascade)
+  Id_departamento Int?          @map("departamentoId")
+  Funcionario     Funcionario?  @relation(fields: [Id_funcionario], references: [id], onDelete: Cascade)
+  Id_funcionario  Int?          @map("funcionarioId")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  @@schema("tecnobanturh")
+}
+
+model FichaAvaliacao {
+  id                     Int                      @id @default(autoincrement())
+  nome_ficha             String                   @unique
+  objetivo               String?
+  perguntafichaavaliacao PerguntaFichaAvaliacao[]
+  avaliacao              Avaliacao[]
+  createdAt              DateTime                 @default(now()) @map("created_at")
+  updatedAt              DateTime                 @updatedAt @map("updated_at")
+
+  @@map("fichaAvaliacao")
+  @@schema("tecnobanturh")
+}
+
+model Competencia {
+  id                     Int                      @id @default(autoincrement())
+  nome_competencia       String                   @unique
+  criterio               Criterio
+  perguntafichaavaliacao PerguntaFichaAvaliacao[]
+  createdAt              DateTime                 @default(now()) @map("created_at")
+  updatedAt              DateTime                 @updatedAt @map("updated_at")
+
+  @@schema("tecnobanturh")
+}
+
+model PerguntaFichaAvaliacao {
+  id               Int             @id @default(autoincrement())
+  competenciaId    Int?
+  fichaAvaliacaoId Int?
+  descricao        String
+  nivel_esperado   Int
+  createdAt        DateTime        @default(now()) @map("created_at")
+  updatedAt        DateTime        @updatedAt @map("updated_at")
+  Competencia      Competencia?    @relation(fields: [competenciaId], references: [id])
+  FichaAvaliacao   FichaAvaliacao? @relation(fields: [fichaAvaliacaoId], references: [id])
+
+  @@schema("tecnobanturh")
+}
+
+model Avaliacao {
+  id                       Int             @id @default(autoincrement())
+  id_funcionario_avaliador Int?
+  id_fichaAvaliacao        Int?
+  id_departamento          Int?
+  Tipo_Avaliacao           TipoAvaliacao
+  Funcionario              Funcionario?    @relation(fields: [id_funcionario_avaliador], references: [id])
+  FichaAvaliacao           FichaAvaliacao? @relation(fields: [id_fichaAvaliacao], references: [id])
+  Departamento             Departamento?   @relation(fields: [id_departamento], references: [id])
+  status                   Status
+  data                     DateTime        @default(now())
+  comentario               String?
+  createdAt                DateTime        @default(now()) @map("created_at")
+  updatedAt                DateTime        @updatedAt @map("updated_at")
+
+  @@schema("tecnobanturh")
+}
+
+//All Enum
+enum Status {
+  Submetido
+  Aprovado
+  Rejeitado
+  Requerido
+
+  @@schema("public")
+}
+
+enum TipoAvaliacao {
+  Auto_Avaliacao
+  Departamento
+
+  @@schema("public")
+}
+
+enum Criterio {
+  Comportamental
+  Tecnico
+
+  @@schema("public")
+}
+
+enum Tipo {
+  livro
+  cientifico
+  outro
+
+  @@schema("public")
+}
+
+enum Contrato {
+  CTD
+  CAP
+
+  @@schema("public")
+}
+
+enum NIVEL_ACADEMICO_RH {
+  Base
+  Medio
+  Universitario
+  Licenciado
+  Mestrado
+  Doctoramento
+
+  @@schema("public")
+}
+
+enum Identificacao_RH {
+  BI
+  Passaporte
+  Residente
+  Outro
+
+  @@schema("public")
+}
+
+enum Regime {
+  geral
+  especial
+
+  @@schema("public")
+}
+
+enum Genero_RH {
+  masculino
+  feminino
+
+  @@schema("public")
+}
+
+// Sprint 4
+
+model Enfermaria {
+  id          Int     @id() @default(autoincrement())
+  descricao   String
+  localizacao String?
+
+  Cama Cama[]
+
+  @@map("enfermaria")
+  @@schema("public")
+}
+
+model Cama {
+  id        Int    @id() @default(autoincrement())
+  descricao String
+
+  Enfermaria   Enfermaria? @relation(fields: [enfermariaId], references: [id], onDelete: Cascade)
+  enfermariaId Int?
+
+  @@map("cama")
+  @@schema("public")
+}
