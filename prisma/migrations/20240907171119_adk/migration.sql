@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Stoque" ALTER COLUMN "nome" SET DATA TYPE TEXT;
